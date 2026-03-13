@@ -1,0 +1,13 @@
+{
+  "name": "quiz-builder/api",
+  "description": "AI-Powered Knowledge Quiz Builder API",
+  "type": "project",
+  "autoload": {
+    "psr-4": {
+      "App\\": "src/"
+    }
+  },
+  "require": {
+    "php": ">=7.3"
+  }
+}

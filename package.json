@@ -1,0 +1,12 @@
+{
+  "name": "quiz-builder",
+  "private": true,
+  "description": "AI-Powered Knowledge Quiz Builder (root)",
+  "scripts": {
+    "postinstall": "npm run install:client",
+    "install:client": "npm install --prefix client",
+    "dev": "npm run dev --prefix client",
+    "build": "npm run build --prefix client",
+    "preview": "npm run preview --prefix client"
+  }
+}
