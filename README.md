@@ -1,17 +1,25 @@
 # AI-Powered Knowledge Quiz Builder
 
-A minimal MVP that generates multiple-choice quizzes from a user-provided topic using an LLM, then lets users answer and see their score and the correct answers.
+A minimal MVP that generates multiple-choice quizzes from a user-provided topic using an LLM. Users get 5 minutes to answer 5 questions (4 options A–D); correct answers are kept server-side until after submission, then the app shows score and review.
 
 ## Stack
 
 - **Frontend:** React 18, Vite, Tailwind CSS
 - **Backend:** PHP 7.3+ with MVC-style structure, JSON API only (compatible with older MAMP PHP 7.3)
-- **AI:** Google Gemini API by default (e.g. `gemini-1.5-flash`); optional OpenAI via `AI_PROVIDER=openai`
+- **AI:** Google Gemini API by default (e.g. `gemini-2.5-flash`); optional OpenAI via `AI_PROVIDER=openai`
+
+## Flow and security
+
+1. **Topic input** → User enters a topic; backend calls the AI and generates 5 MC questions.
+2. **Generate response** → Correct answers are stored in the **PHP session** (keyed by quiz id). The client receives only the quiz **without** correct answers (question text + options A–D), so answers cannot be read from the network or client state.
+3. **Quiz** → User has **5 minutes** (countdown timer); they select one option per question.
+4. **Submit** → Client sends `quizId` and `answers` (no quiz payload with answers). Server loads correct answers from session, scores, returns result (score + per-question correct/user answer and isCorrect), then clears that quiz’s data from session.
+5. **Results** → Score and review (correct answer and user’s answer per question) are shown.
 
 ## Architecture
 
-- **PHP (MVC):** Single front controller (`api/public/index.php`) builds a request, dispatches by `operation_type` to `QuizController`, and sends the JSON response. The controller creates its own `QuizService` (via `AIServiceFactory`); no dependency injection. Models are `Quiz`, `Question`, and `QuizResult` (no database for MVP).
-- **React:** Single-page flow: topic input → quiz (5 questions, 4 options A–D) → results (score + correct answers). The client calls the PHP API via `fetch`; in development, Vite proxies `/api` to the PHP backend.
+- **PHP (MVC):** Single front controller (`api/public/index.php`) starts the session, builds a request, dispatches by `operation_type` to `QuizController`, and sends the JSON response. The controller creates its own `QuizService` (via `AIServiceFactory`); no dependency injection. Models are `Quiz`, `Question`, and `QuizResult`. Correct answers are stored in `$_SESSION['quiz_answers'][quizId]` for the duration of the quiz; no database.
+- **React:** Single-page flow: topic input → timed quiz (5 questions, 4 options A–D, 5-min countdown) → submit (quizId + answers) → results (score + correct answers). The client calls the PHP API via `fetch`; in development, Vite proxies `/api` to the PHP backend.
 
 ## Design patterns & SOLID
 
@@ -61,7 +69,7 @@ A minimal MVP that generates multiple-choice quizzes from a user-provided topic 
 
 ## AI tool and tradeoffs
 
-- **Gemini** is the default provider (free tier available; get key at https://aistudio.google.com/app/apikey). Set `AI_PROVIDER=openai` and `OPENAI_API_KEY` in `.env` to use OpenAI instead. The prompt asks for exactly 5 questions in a fixed JSON schema. No retrieval or persistence in the MVP; the backend is stateless.
+- **Gemini** is the default provider (model `gemini-2.5-flash`; free tier at https://aistudio.google.com/app/apikey). Set `AI_PROVIDER=openai` and `OPENAI_API_KEY` in `.env` to use OpenAI instead. The prompt asks for exactly 5 questions in a fixed JSON schema. Correct answers are held in PHP session only (not sent to the client until after submit); no database.
 
 ## Development tools
 
